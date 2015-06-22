@@ -5,7 +5,7 @@
 
 .PHONY: test
 test:
-	$(MAKE) -C src test
+	go test
 
 .PHONY: doc
 doc:		
