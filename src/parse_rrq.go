@@ -36,6 +36,7 @@ func sliceUpToNullByte(p []byte) ([]byte, []byte) {
 func ParseRequest(data []byte) (*Request, error) {
 	request := &Request{Blocksize: DEFAULT_BLOCKSIZE}
 	request.Opcode = binary.BigEndian.Uint16(data)
+	request.TransferSize = -1
 
 	if request.Opcode != RRQ {
 		return request, fmt.Errorf("Unknown optcode %d", request.Opcode)
