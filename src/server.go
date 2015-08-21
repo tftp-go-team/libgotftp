@@ -3,11 +3,13 @@ package tftp
 import (
 	"fmt"
 	"net"
+	"regexp"
 )
 
 type Server struct {
-	conn   *net.UDPConn
-	buffer []byte
+	conn      *net.UDPConn
+	buffer    []byte
+	localAddr string
 }
 
 func (server *Server) Accept() (*RRQresponse, error) {
@@ -22,6 +24,7 @@ func (server *Server) Accept() (*RRQresponse, error) {
 		return nil, fmt.Errorf("Failed to parse request: %v", err)
 	}
 	request.Addr = &addr
+	request.LocalAddr = server.localAddr
 
 	if request.Opcode != RRQ {
 		return nil, fmt.Errorf("Unkown opcode %v", request.Opcode)
@@ -41,6 +44,7 @@ func (server *Server) Accept() (*RRQresponse, error) {
 }
 
 func NewTFTPServer(addr *net.UDPAddr) (*Server, error) {
+	re := regexp.MustCompile(":[^:]*$")
 
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
@@ -50,6 +54,7 @@ func NewTFTPServer(addr *net.UDPAddr) (*Server, error) {
 	return &Server{
 		conn,
 		make([]byte, 2048),
+		re.ReplaceAllString(addr.String(), ":0"),
 	}, nil
 
 }

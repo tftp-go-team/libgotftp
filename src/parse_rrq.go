@@ -14,6 +14,7 @@ type Request struct {
 	Mode         int
 	Path         string
 	Addr         *net.Addr
+	LocalAddr    string
 }
 
 type RRQParseError struct {

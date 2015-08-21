@@ -190,7 +190,7 @@ func (res *RRQresponse) End() (int, error) {
 
 func NewRRQresponse(clientaddr *net.UDPAddr, request *Request, badinternet bool) (*RRQresponse, error) {
 
-	listenaddr, err := net.ResolveUDPAddr("udp", ":0")
+	listenaddr, err := net.ResolveUDPAddr("udp", request.LocalAddr)
 	if err != nil {
 		return nil, err
 	}
