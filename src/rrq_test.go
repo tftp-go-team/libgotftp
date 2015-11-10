@@ -9,6 +9,7 @@ import (
 
 type MockConnection struct {
 	datawritten [][]byte
+	closed      bool
 }
 
 func (conn *MockConnection) Write(incoming []byte) (int, error) {
@@ -16,6 +17,11 @@ func (conn *MockConnection) Write(incoming []byte) (int, error) {
 	copy(data, incoming)
 	conn.datawritten = append(conn.datawritten, data)
 	return len(incoming), nil
+}
+
+func (conn *MockConnection) Close() error {
+	conn.closed = true
+	return nil
 }
 
 func (conn *MockConnection) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
@@ -46,6 +52,14 @@ func newRRQResonponse() (*RRQresponse, *MockConnection) {
 		-1,
 	}
 	return rrq, conn
+}
+
+func TestClosed(t *testing.T) {
+	rrq, conn := newRRQResonponse()
+	rrq.End()
+	if conn.closed != true {
+		t.Fatalf("Connection should be closed")
+	}
 }
 
 func TestSmallWrite(t *testing.T) {

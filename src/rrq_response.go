@@ -12,6 +12,7 @@ import (
 type Connection interface {
 	ReadFrom(b []byte) (n int, addr net.Addr, err error)
 	Write(p []byte) (n int, err error)
+	Close() (err error)
 }
 
 type RRQresponse struct {
@@ -162,6 +163,8 @@ func (res *RRQresponse) WriteOACK() error {
 }
 
 func (res *RRQresponse) End() (int, error) {
+	defer res.conn.Close()
+
 	// Signal end of the transmission. This can be neither empty block or
 	// block smaller than res.Request.Blocksize
 	return res.writeBuffer()
