@@ -5,11 +5,16 @@ import (
 	"net"
 	"reflect"
 	"testing"
+	"time"
 )
 
 type MockConnection struct {
 	datawritten [][]byte
 	closed      bool
+}
+
+func (conn *MockConnection) SetWriteDeadline(time.Time) error {
+	return nil
 }
 
 func (conn *MockConnection) Write(incoming []byte) (int, error) {
@@ -19,8 +24,7 @@ func (conn *MockConnection) Write(incoming []byte) (int, error) {
 	return len(incoming), nil
 }
 
-func (conn *MockConnection) Close() error {
-	conn.closed = true
+func (conn *MockConnection) SetReadDeadline(time.Time) error {
 	return nil
 }
 
@@ -29,6 +33,11 @@ func (conn *MockConnection) ReadFrom(p []byte) (n int, addr net.Addr, err error)
 	binary.BigEndian.PutUint16(p, ACK)
 	binary.BigEndian.PutUint16(p[2:], num)
 	return len(p), nil, nil
+}
+
+func (conn *MockConnection) Close() error {
+	conn.closed = true
+	return nil
 }
 
 func newRRQResonponse() (*RRQresponse, *MockConnection) {
