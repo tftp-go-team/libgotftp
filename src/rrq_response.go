@@ -10,8 +10,13 @@ import (
 )
 
 type Connection interface {
+	SetReadDeadline(time.Time) error
 	ReadFrom(b []byte) (n int, addr net.Addr, err error)
+
+	SetWriteDeadline(time.Time) error
 	Write(p []byte) (n int, err error)
+
+	Close() (err error)
 }
 
 type RRQresponse struct {
@@ -23,6 +28,20 @@ type RRQresponse struct {
 	blocknum     uint16
 	badinternet  bool
 	TransferSize int
+}
+
+// readFrom sets a read timeout before calling res.conn.ReadFrom to ensure the
+// socket will be free'd if the client is disconnected.
+func readFrom(res *RRQresponse, b []byte) (int, net.Addr, error) {
+	res.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	return res.conn.ReadFrom(b)
+}
+
+// write sets a write timeout before calling res.conn.Write to ensure the
+// socket will be free'd if the client is disconnected.
+func write(res *RRQresponse, p []byte) (int, error) {
+	res.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return res.conn.Write(p)
 }
 
 func (res *RRQresponse) SimulateBadInternet() bool {
@@ -77,13 +96,13 @@ func (res *RRQresponse) writeBuffer() (int, error) {
 		written = len(out)
 	} else {
 		var err error
-		written, err = res.conn.Write(out)
+		written, err = write(res, out)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	_, _, err := res.conn.ReadFrom(res.ack)
+	_, _, err := readFrom(res, res.ack)
 	if err != nil {
 		return 0, err
 	}
@@ -122,7 +141,7 @@ func (res *RRQresponse) WriteError(code uint16, message string) error {
 	copy(errorbuffer[4:], message)
 	errorbuffer[len(errorbuffer)-1] = 0
 
-	_, err := res.conn.Write(errorbuffer)
+	_, err := write(res, errorbuffer)
 	return err
 }
 
@@ -146,12 +165,12 @@ func (res *RRQresponse) WriteOACK() error {
 		oackbuffer = append(oackbuffer, 0)
 	}
 
-	_, err := res.conn.Write(oackbuffer)
+	_, err := write(res, oackbuffer)
 	if err != nil {
 		return err
 	}
 
-	_, _, err = res.conn.ReadFrom(res.ack)
+	_, _, err = readFrom(res, res.ack)
 	if err != nil {
 		return err
 	}
@@ -162,6 +181,8 @@ func (res *RRQresponse) WriteOACK() error {
 }
 
 func (res *RRQresponse) End() (int, error) {
+	defer res.conn.Close()
+
 	// Signal end of the transmission. This can be neither empty block or
 	// block smaller than res.Request.Blocksize
 	return res.writeBuffer()
@@ -175,7 +196,6 @@ func NewRRQresponse(clientaddr *net.UDPAddr, request *Request, badinternet bool)
 	}
 
 	conn, err := net.DialUDP("udp", listenaddr, clientaddr)
-
 	if err != nil {
 		return nil, err
 	}
