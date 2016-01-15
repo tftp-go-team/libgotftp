@@ -49,6 +49,7 @@ func newRRQResonponse() (*RRQresponse, *MockConnection) {
 		-1,
 		"/foo",
 		nil,
+		"",
 	}
 	rrq := &RRQresponse{
 		conn,
