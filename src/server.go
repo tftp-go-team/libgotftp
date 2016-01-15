@@ -6,8 +6,9 @@ import (
 )
 
 type Server struct {
-	conn   *net.UDPConn
-	buffer []byte
+	conn       *net.UDPConn
+	listenAddr *net.UDPAddr
+	buffer     []byte
 }
 
 func (server *Server) Accept() (*RRQresponse, error) {
@@ -32,7 +33,7 @@ func (server *Server) Accept() (*RRQresponse, error) {
 		return nil, fmt.Errorf("Failed to resolve client address: %v", err)
 	}
 
-	response, err := NewRRQresponse(raddr, request, false)
+	response, err := NewRRQresponse(server, raddr, request, false)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +42,6 @@ func (server *Server) Accept() (*RRQresponse, error) {
 }
 
 func NewTFTPServer(addr *net.UDPAddr) (*Server, error) {
-
 	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		return nil, fmt.Errorf("Failed listen UDP %v", err)
@@ -49,6 +49,7 @@ func NewTFTPServer(addr *net.UDPAddr) (*Server, error) {
 
 	return &Server{
 		conn,
+		addr,
 		make([]byte, 2048),
 	}, nil
 

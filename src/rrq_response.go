@@ -188,9 +188,14 @@ func (res *RRQresponse) End() (int, error) {
 	return res.writeBuffer()
 }
 
-func NewRRQresponse(clientaddr *net.UDPAddr, request *Request, badinternet bool) (*RRQresponse, error) {
+func NewRRQresponse(server *Server, clientaddr *net.UDPAddr, request *Request, badinternet bool) (*RRQresponse, error) {
 
-	listenaddr, err := net.ResolveUDPAddr("udp", ":0")
+	listenIp := ""
+	if server.listenAddr.IP != nil {
+		listenIp = server.listenAddr.IP.String()
+	}
+
+	listenaddr, err := net.ResolveUDPAddr("udp", listenIp+":0")
 	if err != nil {
 		return nil, err
 	}
