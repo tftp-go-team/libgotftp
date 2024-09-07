@@ -3,7 +3,7 @@
 
 ## About
 
-`libgotftp` is a TFTP library for go lang. Originally written by @epeli for hooktftp. We decided
+`libgotftp` is a TFTP library for go lang. Originally written by [Esa-Matti Suuronen](https://esamatti.fi) for hooktftp. We decided
 to split library into new repository to be able to use package into other projects.
 
 
